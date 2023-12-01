@@ -7,11 +7,19 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 ARG DEV=false
-
+RUN apk update
 # Install neccessory Packages for building wheel of python
-RUN apk add --update --no-cache postgresql-client jpeg-dev
+RUN apk add --update --no-cache jpeg-dev libstdc++ openssl1.1-compat
 RUN apk add --update --no-cache --virtual .tmp-build-deps \
-    build-base postgresql-dev musl-dev zlib zlib-dev linux-headers
+    build-base unixodbc-dev musl-dev zlib zlib-dev linux-headers curl
+
+# Install the Microsoft ODBC driver Linux.Follow the mssql documentation: https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15
+RUN curl -O https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/msodbcsql17_17.8.1.1-1_amd64.apk
+RUN curl -O https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/mssql-tools_17.8.1.1-1_amd64.apk
+
+# Install the package(s)
+RUN apk add --allow-untrusted msodbcsql17_17.8.1.1-1_amd64.apk
+RUN apk add --allow-untrusted mssql-tools_17.8.1.1-1_amd64.apk
 
 # Copy requirements for dev and prod
 COPY ./requirements.txt /tmp/requirements.txt
