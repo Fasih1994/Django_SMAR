@@ -57,7 +57,8 @@ class UserRoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user Object"""
     # organization_id = OrganizationSerializer(read_only=True)
-    # package_id = PackageSerializer(read_only=True) chk u_role 
+    # package_id = PackageSerializer(read_only=True)
+    # user_role_id = UserRoleSerializer(read_only=True)
 
     class Meta:
         model = get_user_model()
