@@ -22,7 +22,9 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/django/schema/', SpectacularAPIView.as_view(), name='api-schema'),
+    path('api/django/schema/',
+         SpectacularAPIView.as_view(),
+         name='api-schema'),
     path(
         'api/django/docs/',
         SpectacularSwaggerView.as_view(url_name='api-schema'),
