@@ -101,11 +101,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    # user_role_id = models.ForeignKey(UserRole, on_delete=models.PROTECT)
-    # organization_id = models.ForeignKey(
-    # Organization, on_delete=models.CASCADE
-    # )
-    # package_id = models.ForeignKey(Package, on_delete=models.PROTECT)
+    user_role_id = models.ForeignKey(UserRole, on_delete=models.PROTECT)
+    organization_id = models.ForeignKey(
+    Organization, on_delete=models.CASCADE
+    )
+    package_id = models.ForeignKey(Package, on_delete=models.PROTECT)
 
     objects = UserManager()
 

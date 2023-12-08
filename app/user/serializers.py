@@ -56,14 +56,13 @@ class UserRoleSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user Object"""
-    # organization_id = OrganizationSerializer(read_only=True)
-    # package_id = PackageSerializer(read_only=True)
-    # user_role_id = UserRoleSerializer(read_only=True)
+    organization_id = OrganizationSerializer(read_only=True)
+    package_id = PackageSerializer(read_only=True)
+    user_role_id = UserRoleSerializer(read_only=True)
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'name']
-        # , 'user_role_id', 'organization_id', 'package_id']
+        fields = ['email', 'password', 'name', 'user_role_id', 'organization_id', 'package_id']
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
     def create(self, validated_data) -> get_user_model():
