@@ -57,4 +57,4 @@ RUN chown -R django-user:django-user /app
 
 USER django-user
 
-# CMD ["run.sh"]
+CMD ["run.sh"]
