@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from core.models import Organization
+from core.models import Organization, PackageStatus, Package, UserRole
 from django.db import IntegrityError
+from datetime import datetime
 
 
 def create_user(email='user@example.com', password='testpass123'):
@@ -85,3 +86,77 @@ class ModelTests(TestCase):
         self.assertEqual(organization.linkedin_profile,
                          'https://ca.linkedin.com/in/abrar')
         self.assertEqual(organization.industry, 'computer_science')
+    
+    def tests_check_package_status(self):
+        organization = Organization.objects.create(
+            organization_name='inseyab'
+        )
+        package = Package.objects.create(
+            package_name = 'pro',
+            package_price = 200
+        )
+        package_status = PackageStatus.objects.create(
+            organization_id = organization,
+            package_id = package,
+            package_status = 'valid',
+            package_start_date = '2023-03-13',
+            package_end_date = '2024-03-13',
+            created_by = 1,
+            last_updated_by = 101,
+            last_update_login = 1
+        )    
+        package_status = PackageStatus.objects.get(
+            package_id = package_status.package_id
+        )
+        self.assertEqual(package_status.package_status, 'valid')
+        self.assertEqual(str(package_status.package_start_date), '2023-03-13')
+        self.assertEqual(str(package_status.package_end_date), '2024-03-13')
+        self.assertEqual(package_status.created_by, 1)
+        self.assertEqual(package_status.last_updated_by, 101)
+        self.assertEqual(package_status.last_update_login, 1)
+        self.assertIsNotNone(package_status.creation_date)
+        self.assertIsNotNone(package_status.last_update_date)
+        self.assertLess(
+            package_status.package_start_date,
+            package_status.package_end_date
+        )
+        self.assertGreater(
+            package_status.package_end_date,
+            package_status.package_start_date
+        )
+        
+    def tests_package_model(self):
+        package = Package.objects.create(
+            package_name = 'pro',
+            package_price = 200,
+            created_by = 1,
+            last_updated_by = 102,
+            last_update_login = 102
+        )    
+        package = Package.objects.get(
+            package_id = package.package_id
+        )
+        self.assertIsNotNone(package.creation_date)
+        self.assertIsNotNone(package.last_update_date)
+        self.assertEqual(package.package_name, 'pro')
+        self.assertEqual(package.package_price, 200)
+        self.assertEqual(package.created_by, 1)
+        self.assertEqual(package.last_updated_by, 102)
+        self.assertEqual(package.last_update_login, 102)
+        
+    def tests_check_userRole_model(self):
+        userrole = UserRole.objects.create(
+            user_role_name = 'tradeforsight',
+            created_by = 1,
+            last_updated_by = 106,
+            last_update_login = 106
+        )
+        userrole = UserRole.objects.get(
+            user_role_id = userrole.user_role_id
+        )
+        self.assertEqual(userrole.user_role_name, 'tradeforsight')
+        self.assertIsNotNone(userrole.creation_date)
+        self.assertIsNotNone(userrole.last_update_date)
+        self.assertEqual(userrole.created_by, 1)
+        self.assertEqual(userrole.last_updated_by, 106)
+        self.assertEqual(userrole.last_update_login, 106)
