@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from core.models import Organization, PackageStatus, Package, UserRole
+from core.models import Organization, PackageStatus, Package, UserRole, User
 from django.db import IntegrityError
 from datetime import datetime
 
@@ -14,12 +14,25 @@ class ModelTests(TestCase):
     """Test models"""
 
     def test_create_user_with_email_successful(self):
+        package = Package.objects.create(
+            package_name = 'pro',
+            package_price = 200
+        )
+        orgnization = Organization.objects.create(
+            organization_name = 'inseyab'
+        )
+        userrole = UserRole.objects.create(
+            user_role_name = 'tradeforesight'
+        )
         """Creating a user with an email is successful"""
 
         email = 'test@example.com'
         password = "testpass123"
         user = get_user_model().objects.create_user(
-            email=email, password=password)
+            email=email, password=password, package_id=package,
+            organization_id=organization,
+            user_role_id=userrole
+            )
 
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
@@ -34,18 +47,62 @@ class ModelTests(TestCase):
         ]
 
         for email, expected in sample_emails:
-            user = get_user_model().objects.create_user(email, 'sample123')
+            package = Package.objects.create(
+                package_name = 'pro',
+                package_price = 'inseyab'
+            )
+            organization = Organization.objects.create(
+                organization_name = 'inseyab'
+            )
+            userrole = UserRole.objects.create(
+                user_role_name = 'tradeforesight'
+            )
+            user = get_user_model().objects.create_user(
+                email, 'sample123',
+                organization_id = organization,
+                package_id = package,
+                user_role_id = userrole
+            )
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_email_raises_error(self):
+        package = Package.objects.create(
+            package_name = 'pro',
+            package_price = 200
+        )
+        organization = organization.objects.create(
+            organization_name = 'inseyab'
+        )
+        userrole = UserRole.objects.create(
+            user_role_name = 'tradeforsight'
+        )    
         """User without email raises error on creation"""
         with self.assertRaises(ValueError):
-            _ = get_user_model().objects.create_user('', "pas123")
+            _ = get_user_model().objects.create_user(
+                '', "pas123",
+                organization_id = organization,
+                package_id = package,
+                user_role_id = userrole
+            )
 
     def test_create_superuser(self):
+        package = Package.objects.create(
+            package_name='pro',
+            package_price=200
+        )
+        organization = Organization.objects.create(
+            organization_name='inseyab'
+        )
+        userrole = UserRole.objects.create(
+            user_role_name='tradeforesight'
+        )
         """Test Creating a superuser"""
         user = get_user_model().objects.create_superuser(
-            'test@example.com', 'tset123')
+            'test@example.com', 'tset123',
+            organization_id=organization,
+            package_id=package,
+            user_role_id=userrole
+            )
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
