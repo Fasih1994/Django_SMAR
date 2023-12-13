@@ -8,24 +8,34 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
+from core.models import Organization
 
-from smmart.serializers import OrganizationSerializer, PackageSerializer, UserRoleSerializer
+from smmart.serializers import (
+    OrganizationSerializer, PackageSerializer, UserRoleSerializer
+    )
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user Object"""
-    organization_id = OrganizationSerializer(read_only=True)
-    package_id = PackageSerializer(read_only=True)
-    user_role_id = UserRoleSerializer(read_only=True)
+    organization = OrganizationSerializer(read_only=True)
+    package = PackageSerializer(read_only=True)
+    role = UserRoleSerializer(read_only=True)
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'name', 'user_role_id', 'organization_id', 'package_id']
+        fields = [
+            'email', 'password', 'name', 'organization', 'package', 'role'
+            ]
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
     def create(self, validated_data) -> get_user_model():
         """Create and return a user with encrypted password"""
-        return get_user_model().objects.create_user(**validated_data)
+        organization_data = validated_data.pop('organization')
+        organization = Organization.objects.create(**organization_data)
+        user = get_user_model().objects.create_user(
+            organization=organization, **validated_data
+            )
+        return user
 
     def update(self, instance, validated_data) -> get_user_model():
         """Update and return user"""
