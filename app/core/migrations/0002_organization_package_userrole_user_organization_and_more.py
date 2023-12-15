@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
             name='UserRole',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(default='admin', max_length=255)),
+                ('name', models.CharField(max_length=255, null=True, blank=True)),
                 ('creation_date', models.DateTimeField(auto_now_add=True)),
                 ('created_by', models.IntegerField(blank=True, null=True)),
                 ('last_update_date', models.DateTimeField(auto_now=True)),

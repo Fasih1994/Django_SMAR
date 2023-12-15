@@ -54,7 +54,7 @@ class UserManager(BaseUserManager):
 
 
 class UserRole(models.Model):
-    name = models.CharField(max_length=255, default="admin")
+    name = models.CharField(max_length=255, null=True, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     created_by = models.IntegerField(null=True, blank=True)
     last_update_date = models.DateTimeField(auto_now=True)
@@ -66,7 +66,7 @@ class UserRole(models.Model):
 
 
 class Package(models.Model):
-    name = models.CharField(max_length=255, default="basic")
+    name = models.CharField(max_length=255, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     created_by = models.IntegerField(null=True, blank=True)
@@ -108,7 +108,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"
