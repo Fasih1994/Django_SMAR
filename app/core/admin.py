@@ -47,3 +47,6 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(models.User, UserAdmin)
+admin.site.register(models.Organization)
+admin.site.register(models.Package)
+admin.site.register(models.UserRole)

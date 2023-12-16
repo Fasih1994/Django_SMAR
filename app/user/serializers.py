@@ -8,18 +8,31 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
-from core.models import Organization
+from core.models import Organization, Package, UserRole
 
 from smmart.serializers import (
     OrganizationSerializer, PackageSerializer, UserRoleSerializer
     )
 
+PACKAGES = {
+    'basic',
+    'pro',
+    'premium',
+    '',
+}
+ROLES = {
+    'admin',
+    'manager',
+    'user',
+    '',
+}
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user Object"""
-    organization = OrganizationSerializer(read_only=True)
-    package = PackageSerializer(read_only=True)
-    role = UserRoleSerializer(read_only=True)
+    organization = OrganizationSerializer(required=True)
+    package = PackageSerializer(required=False)
+    role = UserRoleSerializer(required=False)
 
     class Meta:
         model = get_user_model()
@@ -28,13 +41,18 @@ class UserSerializer(serializers.ModelSerializer):
             ]
         extra_kwargs = {"password": {"write_only": True, "min_length": 5}}
 
-    def create(self, validated_data) -> get_user_model():
+    def create(self, validated_data):
         """Create and return a user with encrypted password"""
-        organization_data = validated_data.pop('organization')
+        organization_data = validated_data.pop('organization', None)
         organization = Organization.objects.create(**organization_data)
+
+        package = Package.objects.get(name='basic')
+        role = UserRole.objects.get(id=1)
+
         user = get_user_model().objects.create_user(
-            organization=organization, **validated_data
-            )
+            organization=organization, package=package, role=role, **validated_data
+        )
+
         return user
 
     def update(self, instance, validated_data) -> get_user_model():
@@ -44,6 +62,30 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
             user.save()
+
+        return user
+
+
+class AdminUserCreateSerializer(UserSerializer):
+    organization = OrganizationSerializer(required=False)
+
+    def create(self, validated_data):
+        """Create and return a user with encrypted password"""
+        request_user = self.context['request'].user
+
+        organization = request_user.organization
+        package = request_user.package
+
+        role_data = validated_data.pop('role')
+
+        if role_data['name'] in ROLES:
+            role, _ = UserRole.objects.get_or_create(name=role_data['name'])
+        else:
+            raise ValueError('Invalid Role Name')
+
+        user = get_user_model().objects.create_user(
+            organization=organization, package=package, role=role, **validated_data
+        )
 
         return user
 
