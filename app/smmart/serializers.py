@@ -3,7 +3,9 @@ from rest_framework import serializers
 from core.models import (
     Organization,
     Package,
-    UserRole)
+    UserRole,
+    Topics
+)
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -36,3 +38,38 @@ class UserRoleSerializer(serializers.ModelSerializer):
             'last_update_date', 'last_updated_by', 'last_update_login']
 
         read_only_fields = ['id', 'creation_date', 'created_by']
+
+
+class TopicSerializer(serializers.ModelSerializer):
+    """Serializer for Topics Object"""
+    user = 'user.serializers.UserSerializer'
+    print(user)
+    class Meta:
+        model = Topics
+        fields = [
+            'id', 'name', 'prompt', 'keywords', 'platform', 'status', 'user',
+            'creation_date', 'created_by', 'last_update_date',
+            'last_updated_by', 'last_update_login']
+
+        read_only_fields = ['id', 'creation_date', 'created_by']
+
+    def create(self, validated_data):
+        """Create and return a topic"""
+        user_id = self.context['request'].user
+        name = validated_data.pop('name', 'Untitled')
+        prompt = validated_data.pop('prompt', '')
+        keywords = validated_data.pop('keywords', '')
+        platform = validated_data.pop('platform', '')
+        status = validated_data.pop('status', 't')
+
+        topic = Topics.objects.create(
+            user=user_id,
+            name=name,
+            prompt=prompt,
+            keywords=keywords,
+            platform=platform,
+            status=status,
+            **validated_data
+        )
+
+        return topic
