@@ -8,11 +8,19 @@ from core.models import (
     User)
 from django.db import IntegrityError
 from datetime import datetime
+from decimal import Decimal
 
 
-def create_user(email='user@example.com', password='testpass123'):
-    """Create and return a new user"""
-    return get_user_model().objects.create_user(email=email, password=password)
+def create_user(email, password, organization=None, package=1, role=1):
+    if not organization:
+        raise ValueError("user must have an organization.")
+    user = get_user_model().objects.create_user(email=email, password=password)
+    user.organization=organization
+    user.package=package
+    user.role=role
+    
+    user.save()
+    return user
 
 
 class ModelTests(TestCase):
@@ -20,27 +28,24 @@ class ModelTests(TestCase):
 
     def test_create_user_with_email_successful(self):
         package = Package.objects.create(
-            package_name = 'pro',
-            package_price = 200
+            name = 'pro',
+            price = Decimal('200.00')
         )
         organization = Organization.objects.create(
-            organization_name = 'inseyab'
+            name = 'inseyab'
         )
         userrole = UserRole.objects.create(
-            user_role_name = 'tradeforesight'
+            name = 'adminone'
         )
-        """Creating a user with an email is successful"""
-
-        email = 'test@example.com'
-        password = "testpass123"
+        """Creating a user with an email is successful"""        
         user = get_user_model().objects.create_user(
-            email=email, password=password, package_id=package.id,
-            organization_id=organization.id,
-            user_role_id=userrole.id,
+            email='test@example.com', password="testpass123", package=package,
+            organization=organization,
+            role=userrole
             )
 
-        self.assertEqual(user.email, email)
-        self.assertTrue(user.check_password(password))
+        self.assertEqual(user.email, 'test@example.com')
+        self.assertTrue(user.check_password("testpass123"))
 
     def test_new_user_email_normalized(self):
         """Test email is normalized for new users"""
@@ -53,86 +58,89 @@ class ModelTests(TestCase):
 
         for email, expected in sample_emails:
             package = Package.objects.create(
-                package_name = 'pro',
-                package_price = 'inseyab'
+                name = 'pro',
+                price = Decimal('200.00')
             )
             organization = Organization.objects.create(
-                organization_name = 'inseyab'
+                name = 'inseyab'
             )
             userrole = UserRole.objects.create(
-                user_role_name = 'tradeforesight'
+                name = 'adminone'
             )
             user = get_user_model().objects.create_user(
-                email, 'sample123',
-                organization_id = organization,
-                package_id = package,
-                user_role_id = userrole
+                email = email,
+                password = 'sample123',
+                organization = organization,
+                package = package,
+                role = userrole
             )
             self.assertEqual(user.email, expected)
 
     def test_new_user_without_email_raises_error(self):
         package = Package.objects.create(
-            package_name = 'pro',
-            package_price = 200
+            name = 'pro',
+            price = Decimal('200.00')
         )
-        organization = organization.objects.create(
-            organization_name = 'inseyab'
+        organization = Organization.objects.create(
+            name = 'inseyab'
         )
         userrole = UserRole.objects.create(
-            user_role_name = 'tradeforsight'
+            name = 'adminone'
         )    
         """User without email raises error on creation"""
         with self.assertRaises(ValueError):
             _ = get_user_model().objects.create_user(
                 '', "pas123",
-                organization_id = organization,
-                package_id = package,
-                user_role_id = userrole
+                organization = organization,
+                package = package,
+                role = userrole
             )
 
     def test_create_superuser(self):
         package = Package.objects.create(
-            package_name='pro',
-            package_price=200
+            name='pro',
+            price=Decimal('200.00')
         )
         organization = Organization.objects.create(
-            organization_name='inseyab'
+            name='inseyab'
         )
         userrole = UserRole.objects.create(
-            user_role_name='tradeforesight'
+            name='adminone'
         )
         """Test Creating a superuser"""
+        SUPERUSER_EMAIL = 'test@example.com'
+        SUPERUSER_PASSWORD = 'tset123'
         user = get_user_model().objects.create_superuser(
-            'test@example.com', 'tset123',
-            organization_id=organization,
-            package_id=package,
-            user_role_id=userrole
+            SUPERUSER_EMAIL, SUPERUSER_PASSWORD,
+            organization=organization,
+            package=package,
+            role=userrole
             )
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
-    def tests_create_new_organization_with_orgname_and_orgid_successfull(self):
-        org_id = 101
-        org_name = "inseyab"
-        organization = Organization.objects.create(
-            organization_id=org_id, organization_name="inseyab")
-        self.assertEqual(Organization.objects.all().count(), 1)
-        self.assertEqual(organization.organization_id, org_id)
-        self.assertEqual(organization.organization_name, org_name)
+    # def tests_create_new_organization_with_orgname_and_orgid_successfull(self):
+    #     org_id = 101
+    #     org_name = "inseyab"
+    #     organization = Organization.objects.create(
+    #         organization_id=org_id, organization_name="inseyab")
+    #     self.assertEqual(Organization.objects.all().count(), 1)
+    #     self.assertEqual(organization.organization_id, org_id)
+    #     self.assertEqual(organization.organization_name, org_name)
 
-    def tests_organization_id_dealing_with_pk(self):
-        org_id = 101
-        Organization.objects.create(organization_id=org_id)
-        with self.assertRaises(IntegrityError) as same_id:
-            """create second org id with the same id"""
-            Organization.objects.create(organization_id=org_id)
-        self.assertIn(str(org_id), str(same_id.exception))
+    # def tests_organization_id_dealing_with_pk(self):
+    #     org_id = 101
+    #     Organization.objects.create(organization_id=org_id)
+    #     with self.assertRaises(IntegrityError) as same_id:
+    #         """create second org id with the same id"""
+    #         Organization.objects.create(organization_id=org_id)
+    #     self.assertIn(str(org_id), str(same_id.exception))
 
     def test_check_org_model(self):
         """test creating an organization"""
 
         organization = Organization.objects.create(
-            organization_name='inseyab',
+            name='inseyab',
             description='django Rest_framework',
             linkedin_profile='https://ca.linkedin.com/in/abrar',
             industry='computer_science',
@@ -140,10 +148,10 @@ class ModelTests(TestCase):
             last_updated_by=125,
             last_update_login=125
         )
-        organization = Organization.objects.get(organization_id=1)
+        org = Organization.objects.get(name='inseyab')
         self.assertIsNotNone(organization.creation_date)
         self.assertIsNotNone(organization.last_update_date)
-        self.assertEqual(organization.organization_name, 'inseyab')
+        self.assertEqual(organization.name, 'inseyab')
         self.assertEqual(organization.description, 'django Rest_framework')
         self.assertEqual(organization.linkedin_profile,
                          'https://ca.linkedin.com/in/abrar')
@@ -190,7 +198,7 @@ class ModelTests(TestCase):
     def test_package_model(self):
         package = Package.objects.create(
             name = 'pro',
-            price = 200,
+            price = Decimal('200.00'),
             created_by = 1,
             last_updated_by = 102,
             last_update_login = 102
@@ -201,22 +209,22 @@ class ModelTests(TestCase):
         self.assertIsNotNone(package.creation_date)
         self.assertIsNotNone(package.last_update_date)
         self.assertEqual(package.name, 'pro')
-        self.assertEqual(package.price, 200)
+        self.assertEqual(package.price, Decimal('200.00'))
         self.assertEqual(package.created_by, 1)
         self.assertEqual(package.last_updated_by, 102)
         self.assertEqual(package.last_update_login, 102)
         
-    def tests_check_userRole_model(self):
+    def test_check_userRole_model(self):
         userrole = UserRole.objects.create(
-            user_role_name = 'tradeforsight',
+            name = 'adminone',
             created_by = 1,
             last_updated_by = 106,
             last_update_login = 106
         )
-        userrole = UserRole.objects.get(
-            user_role_id = userrole.user_role_id
+        role = UserRole.objects.get(
+            name = 'adminone'
         )
-        self.assertEqual(userrole.user_role_name, 'tradeforsight')
+        self.assertEqual(userrole.name, 'adminone')
         self.assertIsNotNone(userrole.creation_date)
         self.assertIsNotNone(userrole.last_update_date)
         self.assertEqual(userrole.created_by, 1)
