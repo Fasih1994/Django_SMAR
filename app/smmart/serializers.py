@@ -73,3 +73,30 @@ class TopicSerializer(serializers.ModelSerializer):
         )
 
         return topic
+
+
+# class GetDataSerializer(serializers.Serializer):
+#     """Serializer for GetData API"""
+#     user_id = serializers.IntegerField()
+#     organization_id = serializers.IntegerField()
+#     topic_id = serializers.IntegerField(required=False)
+#     keywords = serializers.ListField()
+#     platforms = serializers.ListField()
+
+#     def validate(self, data):
+#         topic_id = data.get('topic_id')
+
+#         if not topic_id:
+#             topic_data = {
+#                 'name': '',
+#                 'prompt': '',
+#                 'keywords': data.get('keywords', ''),
+#                 'platform': data.get('platforms', ''),
+#                 'status': '',
+#                 'user': data.get('user_id'),
+#             }
+#             topic_serializer = TopicSerializer(data=topic_data)
+#             topic_serializer.is_valid(raise_exception=True)
+#             data['topic'] = topic_serializer.save()
+
+#         return data

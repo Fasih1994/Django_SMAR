@@ -1,10 +1,19 @@
-from rest_framework import generics, authentication, viewsets
+from rest_framework import (generics,
+                            authentication,
+                            viewsets,
+                            # status
+                            )
 from rest_framework.permissions import IsAuthenticated
+# from rest_framework.views import APIView
 from core.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 from user.serializers import AdminUserCreateSerializer
-from .serializers import TopicSerializer
+from .serializers import (
+    TopicSerializer,
+    # GetDataSerializer
+)
 from core.models import Topics
+# from rest_framework.response import Response
 
 
 class AdminUserCreateAPIView(generics.CreateAPIView):
@@ -40,6 +49,56 @@ class TopicViewSet(viewsets.ModelViewSet):
     #     org_id = user.organization_id
     #     queryset = Topics.objects.filter(user__organization_id=org_id)
     #     return queryset
+
+
+# class GetDataAPIView(APIView):
+#     authentication_classes = [authentication.TokenAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+#         serializer = GetDataSerializer(data=request.query_params)
+#         serializer.is_valid(raise_exception=True)
+
+#         user_id = serializer.validated_data['user_id']
+#         organization_id = serializer.validated_data['organization_id']
+#         topic_id = serializer.validated_data.get('topic_id')
+#         keywords = serializer.validated_data['keywords']
+#         platforms = serializer.validated_data['platforms']
+
+#         if topic_id:
+#             try:
+#                 topic = Topics.objects.get(id=topic_id)
+#             except Topics.DoesNotExist:
+#                 return Response({'error': 'Topic not found'}, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             topic_data = {
+#                 'name': '',
+#                 'prompt': '',
+#                 'keywords': keywords,
+#                 'platform': platforms,
+#                 'status': '',
+#                 'user': user_id,
+#             }
+#             topic_serializer = TopicSerializer(data=topic_data)
+#             topic_serializer.is_valid(raise_exception=True)
+#             topic = topic_serializer.save()
+
+#         for keyword in keywords:
+#             print(f'Keyword: {keyword}')
+
+#         for platform in platforms:
+#             print(f'Platform: {platform}')
+
+
+#         data = {
+#             'user_id': user_id,
+#             'organization_id': organization_id,
+#             'topic_id': topic.id,
+#             'platform': topic.platform,
+#             'keywords': topic.keywords,
+#         }
+
+#         return Response(data)
 
 
 class ManageAdminUserAPIView(generics.RetrieveUpdateDestroyAPIView):

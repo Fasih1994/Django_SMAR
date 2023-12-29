@@ -15,5 +15,6 @@ app_name = 'smmart'
 urlpatterns = [
     # path('admin/user/create', views.AdminUserCreateAPIView.as_view(), name='new-user'),
     path('admin/user/', views.ManageAdminUserAPIView.as_view(), name='edit-user'),
+    # path('get-data/', views.GetDataAPIView.as_view(), name='get-data'),
     path('', include(router.urls)),
 ]
