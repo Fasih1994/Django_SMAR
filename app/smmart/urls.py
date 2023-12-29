@@ -8,11 +8,12 @@ from smmart import views
 router = DefaultRouter()
 
 router.register('admin/users', viewset=views.UserViewSet)
+router.register('user/topics', viewset=views.TopicViewSet)
 
 app_name = 'smmart'
 
 urlpatterns = [
     # path('admin/user/create', views.AdminUserCreateAPIView.as_view(), name='new-user'),
     path('admin/user/', views.ManageAdminUserAPIView.as_view(), name='edit-user'),
-    path('', include(router.urls))
+    path('', include(router.urls)),
 ]

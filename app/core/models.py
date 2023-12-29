@@ -93,6 +93,25 @@ class Organization(models.Model):
         return self.name
 
 
+class Topics(models.Model):
+    name = models.CharField(max_length=255, null=True)
+    prompt = models.CharField(max_length=255, null=True)
+    keywords = models.CharField(max_length=255, null=True)
+    platform = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=1, null=True)
+    user = models.ForeignKey(
+        'User', null=True, blank=True, on_delete=models.CASCADE
+        )
+    creation_date = models.DateTimeField(auto_now=True)
+    created_by = models.IntegerField(null=True, blank=True)
+    last_update_date = models.DateTimeField(auto_now_add=True)
+    last_updated_by = models.IntegerField(null=True, blank=True)
+    last_update_login = models.IntegerField(null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """USER in the system"""
     email = models.EmailField(max_length=255, unique=True)
