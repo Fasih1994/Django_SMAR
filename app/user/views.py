@@ -10,6 +10,8 @@ from user.serializers import (
     AuthTokenSerializer,
 )
 
+from django.contrib.auth import get_user_model
+
 
 class CreateUserView(generics.CreateAPIView):
     """
@@ -18,6 +20,7 @@ class CreateUserView(generics.CreateAPIView):
     Args:
         generics (_type_): _description_
     """
+    queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
 
 

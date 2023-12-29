@@ -23,12 +23,12 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/django/schema/',
-         SpectacularAPIView.as_view(),
-         name='api-schema'),
+         SpectacularAPIView.as_view(), name='api-schema'),
     path(
         'api/django/docs/',
         SpectacularSwaggerView.as_view(url_name='api-schema'),
         name='api-docs',
     ),
-    path('api/django/user/', include('user.urls'))
+    path('api/django/user/', include('user.urls')),
+    path('api/django/smmart/', include('smmart.urls')),
 ]

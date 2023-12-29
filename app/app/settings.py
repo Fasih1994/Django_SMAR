@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # custom
     'core',
     'user',
+    'smmart',
 
     # third party
     'rest_framework',
