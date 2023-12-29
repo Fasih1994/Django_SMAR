@@ -1,10 +1,10 @@
-from rest_framework import (generics,
-                            authentication,
-                            viewsets,
-                            # status
-                            )
+from rest_framework import (
+    generics,
+    authentication,
+    viewsets,
+    status
+)
 from rest_framework.permissions import IsAuthenticated
-# from rest_framework.views import APIView
 from core.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 from user.serializers import AdminUserCreateSerializer
@@ -13,7 +13,7 @@ from .serializers import (
     # GetDataSerializer
 )
 from core.models import Topics
-# from rest_framework.response import Response
+from rest_framework.response import Response
 
 
 class AdminUserCreateAPIView(generics.CreateAPIView):
@@ -51,11 +51,12 @@ class TopicViewSet(viewsets.ModelViewSet):
     #     return queryset
 
 
-# class GetDataAPIView(APIView):
+# class GetDataAPIView(generics.CreateAPIView):
+#     serializer_class = GetDataSerializer
 #     authentication_classes = [authentication.TokenAuthentication]
 #     permission_classes = [IsAuthenticated]
 
-#     def get(self, request, *args, **kwargs):
+#     def post(self, request, *args, **kwargs):
 #         serializer = GetDataSerializer(data=request.query_params)
 #         serializer.is_valid(raise_exception=True)
 
@@ -88,7 +89,6 @@ class TopicViewSet(viewsets.ModelViewSet):
 
 #         for platform in platforms:
 #             print(f'Platform: {platform}')
-
 
 #         data = {
 #             'user_id': user_id,
