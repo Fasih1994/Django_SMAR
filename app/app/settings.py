@@ -44,10 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-
     # custom
     'core',
     'user',
+    'smmart',
 
     # third party
     'rest_framework',

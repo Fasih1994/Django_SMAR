@@ -8,6 +8,21 @@ from django.urls import reverse
 
 from rest_framework.test import APIClient
 from rest_framework import status
+from user.serializers import UserSerializer
+from core.models import (
+    Organization,
+    Package,
+    UserRole
+)
+import json
+from unittest.mock import patch
+
+
+
+
+
+
+
 
 CREATE_USER_URL = reverse('user:create')
 TOKEN_URL = reverse('user:token')
@@ -15,8 +30,16 @@ ME_URL = reverse('user:me')
 
 
 def create_user(**params):
-    """Create and return a new user"""
-    return get_user_model().objects.create_user(**params)
+    organization_data = params.pop('organization', None)
+    if organization_data is None:
+        organization_data = {'name': 'default_organization'}
+    organization = Organization.objects.create(**organization_data)    
+    role, _ = UserRole.objects.get_or_create(name='admin')
+    package, _ = Package.objects.get_or_create(name='basic')
+
+    return get_user_model().objects.create_user(
+        organization=organization, package=package, role=role, **params
+    )
 
 
 class PublicUserAPITests(TestCase):
@@ -24,16 +47,24 @@ class PublicUserAPITests(TestCase):
 
     def setUp(self) -> None:
         self.client = APIClient()
+        UserRole.objects.create(id=1, name='admin')
+
+    def create_basic_package(self):
+        # Create the 'basic' package if it doesn't exist
+        Package.objects.get_or_create(name='basic')
 
     def test_create_user_success(self):
         """Creating user is successful"""
-        payload = {
-            'email': 'test@example.com',
-            "password": 'testPass123',
-            'name': "Test Name"
-        }
+        self.create_basic_package()  # Create 'basic' package if not exists
 
-        res = self.client.post(CREATE_USER_URL, payload)
+        payload = {
+            "email": "test@example.com",
+            "password": "testPass123",
+            "name": "Test Name",
+            "organization": {"name": "Test organization"},
+        }
+        json_payload = json.dumps(payload)
+        res = self.client.post(CREATE_USER_URL, data=json_payload, content_type='application/json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         user = get_user_model().objects.get(email=payload['email'])
         self.assertTrue(user.check_password(payload['password']))
@@ -41,15 +72,15 @@ class PublicUserAPITests(TestCase):
 
     def test_user_with_email_exists_error(self):
         """Test error return if email already registered"""
+        organization_data = {'name': 'Test organization'}
         payload = {
             'email': 'test@example.com',
-            "password": 'testPass123',
-            'name': "Test Name"
+            'password': 'testPass123',
+            'name': 'Test Name',
+            'organization': organization_data,
         }
-
         create_user(**payload)
-        res = self.client.post(CREATE_USER_URL, payload)
-
+        res = self.client.post(CREATE_USER_URL, json.dumps(payload), content_type='application/json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_password_too_short_error(self):
@@ -107,7 +138,6 @@ class PublicUserAPITests(TestCase):
             'email': "test@example.com",
             'password': ''
         }
-
         res = self.client.post(TOKEN_URL, payload)
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -115,7 +145,6 @@ class PublicUserAPITests(TestCase):
     def test_retrieve_user_unauthorized(self):
         """Test Authentication is rquired for user"""
         res = self.client.get(ME_URL)
-
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
@@ -134,23 +163,54 @@ class PrivateUserAPITests(TestCase):
         '''Test retrieving profile of the authenticated user'''
         res = self.client.get(ME_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, {
-            "name": self.user.name,
-            "email": self.user.email
-        })
+        self.assertEqual(res.data["name"], self.user.name)
+        self.assertEqual(res.data["email"], self.user.email)
 
     def test_post_me_not_allowed(self):
         """Test POST not allowed for me endpoint"""
-        res = self.client.post(ME_URL, {})
+        me_url = reverse('user:me')  
+        res = self.client.post(me_url, {})
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_update_user_profile(self):
         """Test Updating authenticated user profile"""
         payload = {'name': 'Updated name', "password": 'newpass123'}
-
         res = self.client.patch(ME_URL, payload)
-
         self.user.refresh_from_db()
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class UserRegistrationAPIViewTest(TestCase):
+         
+    def setUp(self):
+        self.client = APIClient()
+        
+    def test_user_registration_api_view_invalid_data(self):
+        invalid_user_data = {
+            'email':'invalid-email',
+            'password':'sh',
+            'name':'Invalid User'
+        }
+        response = self.client.post(CREATE_USER_URL, invalid_user_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_create_user_with_defaults(self):
+         self.package = Package.objects.get_or_create(name='basic')
+         self.role = UserRole.objects.get_or_create(name='admin',id=1)
+         data = {
+            "email": "user@example.com",
+            "password": "test@password",
+            "name": "testuser",
+            "organization": {
+                "name": "Test6Org"
+            }
+        }
+         response = self.client.post(CREATE_USER_URL, data, format='json')
+         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+         user = get_user_model().objects.get(email = data['email'])
+         self.assertEqual(user.organization.name, 'Test6Org')
+         self.assertEqual(user.role.name, 'admin')
+         self.assertEqual(user.package.name, 'basic')
+         self.assertEqual(user.role.id, 1)
