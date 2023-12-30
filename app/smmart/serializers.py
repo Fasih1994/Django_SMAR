@@ -24,8 +24,10 @@ class PackageSerializer(serializers.ModelSerializer):
     """Serializer for Package Object"""
     class Meta:
         model = Package
-        fields = ['id', 'name', 'price', 'creation_date', 'created_by',
-            'last_update_date', 'last_updated_by', 'last_update_login']
+        fields = [
+            'id', 'name', 'price', 'creation_date', 'created_by',
+            'last_update_date', 'last_updated_by','last_update_login'
+            ]
 
         read_only_fields = ['id', 'creation_date', 'created_by']
 
@@ -34,16 +36,18 @@ class UserRoleSerializer(serializers.ModelSerializer):
     """Serializer for UserRole Object"""
     class Meta:
         model = UserRole
-        fields = ['id', 'name', 'creation_date', 'created_by',
-            'last_update_date', 'last_updated_by', 'last_update_login']
+        fields = [
+            'id', 'name', 'creation_date', 'created_by',
+            'last_update_date', 'last_updated_by', 'last_update_login'
+            ]
 
         read_only_fields = ['id', 'creation_date', 'created_by']
 
 
 class TopicSerializer(serializers.ModelSerializer):
     """Serializer for Topics Object"""
+
     user = 'user.serializers.UserSerializer'
-    print(user)
     class Meta:
         model = Topics
         fields = [
@@ -73,3 +77,30 @@ class TopicSerializer(serializers.ModelSerializer):
         )
 
         return topic
+
+
+# class GetDataSerializer(serializers.Serializer):
+#     """Serializer for GetData API"""
+#     user_id = serializers.IntegerField()
+#     organization_id = serializers.IntegerField()
+#     topic_id = serializers.IntegerField(required=False)
+#     keywords = serializers.ListField()
+#     platforms = serializers.ListField()
+
+#     def validate(self, data):
+#         topic_id = data.get('topic_id')
+
+#         if not topic_id:
+#             topic_data = {
+#                 'name': '',
+#                 'prompt': '',
+#                 'keywords': data.get('keywords', ''),
+#                 'platform': data.get('platforms', ''),
+#                 'status': '',
+#                 'user': data.get('user_id'),
+#             }
+#             topic_serializer = TopicSerializer(data=topic_data)
+#             topic_serializer.is_valid(raise_exception=True)
+#             data['topic'] = topic_serializer.save()
+
+#         return data

@@ -47,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
         organization = Organization.objects.create(**organization_data)
 
         package = Package.objects.get(name='basic')
-        role = UserRole.objects.get(id=1)
+        role = UserRole.objects.get(name='admin')
 
         user = get_user_model().objects.create_user(
             organization=organization, package=package, role=role, **validated_data
