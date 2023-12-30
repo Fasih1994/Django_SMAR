@@ -1,8 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from core.models import (
-    Organization, 
-    # PackageStatus, 
+    Organization,
+    Topics, 
     Package, 
     UserRole, 
     User)
@@ -119,26 +119,9 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
-    # def tests_create_new_organization_with_orgname_and_orgid_successfull(self):
-    #     org_id = 101
-    #     org_name = "inseyab"
-    #     organization = Organization.objects.create(
-    #         organization_id=org_id, organization_name="inseyab")
-    #     self.assertEqual(Organization.objects.all().count(), 1)
-    #     self.assertEqual(organization.organization_id, org_id)
-    #     self.assertEqual(organization.organization_name, org_name)
-
-    # def tests_organization_id_dealing_with_pk(self):
-    #     org_id = 101
-    #     Organization.objects.create(organization_id=org_id)
-    #     with self.assertRaises(IntegrityError) as same_id:
-    #         """create second org id with the same id"""
-    #         Organization.objects.create(organization_id=org_id)
-    #     self.assertIn(str(org_id), str(same_id.exception))
-
     def test_check_org_model(self):
         """test creating an organization"""
-
+        
         organization = Organization.objects.create(
             name='inseyab',
             description='django Rest_framework',
@@ -156,44 +139,6 @@ class ModelTests(TestCase):
         self.assertEqual(organization.linkedin_profile,
                          'https://ca.linkedin.com/in/abrar')
         self.assertEqual(organization.industry, 'computer_science')
-    
-    # def tests_check_package_status(self):
-    #     organization = Organization.objects.create(
-    #         organization_name='inseyab'
-    #     )
-    #     package = Package.objects.create(
-    #         package_name = 'pro',
-    #         package_price = 200
-    #     )
-    #     package_status = PackageStatus.objects.create(
-    #         organization_id = organization,
-    #         package_id = package,
-    #         package_status = 'valid',
-    #         package_start_date = '2023-03-13',
-    #         package_end_date = '2024-03-13',
-    #         created_by = 1,
-    #         last_updated_by = 101,
-    #         last_update_login = 1
-    #     )    
-    #     package_status = PackageStatus.objects.get(
-    #         package_id = package_status.package_id
-    #     )
-    #     self.assertEqual(package_status.package_status, 'valid')
-    #     self.assertEqual(str(package_status.package_start_date), '2023-03-13')
-    #     self.assertEqual(str(package_status.package_end_date), '2024-03-13')
-    #     self.assertEqual(package_status.created_by, 1)
-    #     self.assertEqual(package_status.last_updated_by, 101)
-    #     self.assertEqual(package_status.last_update_login, 1)
-    #     self.assertIsNotNone(package_status.creation_date)
-    #     self.assertIsNotNone(package_status.last_update_date)
-    #     self.assertLess(
-    #         package_status.package_start_date,
-    #         package_status.package_end_date
-    #     )
-    #     self.assertGreater(
-    #         package_status.package_end_date,
-    #         package_status.package_start_date
-    #     )
         
     def test_package_model(self):
         package = Package.objects.create(
@@ -230,3 +175,46 @@ class ModelTests(TestCase):
         self.assertEqual(userrole.created_by, 1)
         self.assertEqual(userrole.last_updated_by, 106)
         self.assertEqual(userrole.last_update_login, 106)
+
+    def test_check_topics_model(self):
+        organization = Organization.objects.create(
+            name = 'inseyab'
+        )
+        package = Package.objects.create(
+            name = 'basic'
+        )
+        role = UserRole.objects.create(
+            name = 'admin'
+        )
+        user=User.objects.create(
+            name = 'testuser',
+            email = 'test@email.com',
+            password = 'testpass',
+            organization = organization,
+            package = package,
+            role = role
+        )
+        topic = Topics.objects.create(
+            name = 'physics',
+            platform = 'airforce',
+            keywords = 'nastp',
+            prompt = 'xyz',
+            status = 'A',
+            created_by = 1,
+            last_updated_by = 105,
+            last_update_login = 105,
+            user = user
+        )
+        topic = Topics.objects.get(
+            name = 'physics'
+        )
+        self.assertEqual(topic.name, 'physics')
+        self.assertEqual(topic.platform, 'airforce')
+        self.assertEqual(topic.keywords, 'nastp')
+        self.assertEqual(topic.prompt, 'xyz')
+        self.assertEqual(topic.status, 'A')
+        self.assertEqual(topic.created_by, 1)
+        self.assertEqual(topic.last_updated_by, 105)
+        self.assertEqual(topic.last_update_login, 105)
+        self.assertIsNotNone(topic.last_update_date)
+        self.assertIsNotNone(topic.creation_date)
