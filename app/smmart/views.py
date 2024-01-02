@@ -7,12 +7,16 @@ from rest_framework import (
 from rest_framework.permissions import IsAuthenticated
 from core.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
-from user.serializers import AdminUserCreateSerializer
+from user.serializers import (
+    AdminUserCreateSerializer, AdminUserUpdateSerializer,
+    PackageSerializer
+    )
 from .serializers import (
     TopicSerializer,
-    # GetDataSerializer
+    GetDataSerializer,
+    OrganizationSerializer
 )
-from core.models import Topics
+from core.models import Topics, Organization, User, Package, UserRole
 from rest_framework.response import Response
 
 
@@ -20,6 +24,17 @@ class AdminUserCreateAPIView(generics.CreateAPIView):
     serializer_class = AdminUserCreateSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated, IsAdminUser]
+
+
+class ManageOrganizationAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """manage the Organization created by admin user"""
+    serializer_class = OrganizationSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_object(self):
+        """Return authenticated admin user"""
+        return self.request.user.organization
 
 
 class TopicCreationAPIView(generics.CreateAPIView):
@@ -36,11 +51,12 @@ class TopicViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Return all topics created by user"""
+        """Return all topics created by the user"""
         user = self.request.user
-        user_id = user.id
-        queryset = Topics.objects.filter(user_id=user_id)
-        return queryset
+        topics = Topics.objects.filter(user=user)
+        # Serialize the queryset using TopicSerializer
+
+        return topics
 
     # def get_queryset(self):
     #     """Return all topics created by user"""
@@ -111,6 +127,11 @@ class ManageAdminUserAPIView(generics.RetrieveUpdateDestroyAPIView):
         """Return authenticated admin user"""
         return self.request.user
 
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return AdminUserUpdateSerializer
+        return AdminUserCreateSerializer
+
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = AdminUserCreateSerializer
@@ -124,3 +145,68 @@ class UserViewSet(viewsets.ModelViewSet):
         organization_id = admin_user.organization_id
         queryset = get_user_model().objects.filter(organization_id=organization_id)
         return queryset
+
+
+class ManageOrganizationPackageAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = PackageSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+
+        user_organization_id = self.request.user.organization_id
+        organization = Organization.objects.get(pk=user_organization_id)
+
+        package_name = request.data.get('name')
+
+        try:
+            package = Package.objects.get(name=package_name)
+        except Package.DoesNotExist:
+            return Response({'error': 'Package does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_package_id = package.id
+
+        users_to_update = User.objects.filter(organization=organization)
+        for user in users_to_update:
+            user.package_id = new_package_id
+            user.save()
+
+        serializer = self.get_serializer(organization, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def get_object(self):
+        user_package_id = self.request.user.package_id
+        package = Package.objects.get(pk=user_package_id)
+        return package
+
+
+# class ManageUserRoleAPIView(generics.UpdateAPIView):
+#     serializer_class = UserRoleSerializer
+#     authentication_classes = [authentication.TokenAuthentication]
+#     permission_classes = [IsAuthenticated, IsAdminUser]
+
+#     def update(self, request, *args, **kwargs):
+#         user_organization_id = self.request.user.organization_id
+
+#         try:
+#             user_id_to_update = kwargs.get('pk')
+#             user = User.objects.get(pk=user_id_to_update, organization_id=user_organization_id)
+#         except User.DoesNotExist:
+#             return Response({'error': 'User does not exist or does not belong to the organization'}, status=status.HTTP_404_NOT_FOUND)
+
+#         role_name = request.data.get('name')
+
+#         try:
+#             role = UserRole.objects.get(name=role_name)
+#         except UserRole.DoesNotExist:
+#             return Response({'error': 'Role does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+#         user.role_id = role.id
+#         user.save()
+
+#         serializer = self.get_serializer(user)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
