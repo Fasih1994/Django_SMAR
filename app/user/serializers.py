@@ -8,7 +8,6 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
-from rest_framework.schemas.openapi import AutoSchema
 from core.models import Organization, Package, UserRole
 
 from smmart.serializers import (
@@ -51,7 +50,8 @@ class UserSerializer(serializers.ModelSerializer):
         role = UserRole.objects.get(name='admin')
 
         user = get_user_model().objects.create_user(
-            organization=organization, package=package, role=role, **validated_data
+            organization=organization,
+            package=package, role=role, **validated_data
         )
 
         return user
@@ -113,7 +113,8 @@ class AdminUserCreateSerializer(UserSerializer):
             raise ValueError('Invalid Role Name')
 
         user = get_user_model().objects.create_user(
-            organization=organization, package=package, role=role, **validated_data
+            organization=organization,
+            package=package, role=role, **validated_data
         )
 
         return user
@@ -143,7 +144,9 @@ class AdminUserUpdateSerializer(serializers.ModelSerializer):
         else:
             raise ValueError('Invalid Role Name')
 
-        user = super().update(instance=instance, role=role, validated_data=validated_data)
+        user = super().update(
+            instance=instance, role=role, validated_data=validated_data
+            )
 
         return user
 

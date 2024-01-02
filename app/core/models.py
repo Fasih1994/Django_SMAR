@@ -82,6 +82,8 @@ class Organization(models.Model):
     name = models.CharField(max_length=255, null=True)
     description = models.CharField(max_length=3000, null=True)
     linkedin_profile = models.URLField(null=True)
+    facebook_profile = models.URLField(null=True)
+    instagram_profile = models.URLField(null=True)
     industry = models.CharField(max_length=1000, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     created_by = models.IntegerField(null=True, blank=True)
