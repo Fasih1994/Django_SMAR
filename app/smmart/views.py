@@ -51,11 +51,12 @@ class TopicViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Return all topics created by user"""
+        """Return all topics created by the user"""
         user = self.request.user
-        user_id = user.id
-        queryset = Topics.objects.filter(user_id=user_id)
-        return queryset
+        topics = Topics.objects.filter(user=user)
+        # Serialize the queryset using TopicSerializer
+
+        return topics
 
     # def get_queryset(self):
     #     """Return all topics created by user"""

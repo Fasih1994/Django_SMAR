@@ -102,6 +102,30 @@ class TopicSerializer(serializers.Serializer):
         return topic
 
 
+    def to_representation(self, instance):
+        """Include topic_id in the serialized representation"""
+        representation = super().to_representation(instance)
+        representation['topic_id'] = instance.id
+        representation['platform'] = instance.platform.split(",")
+        representation['keywords'] = instance.keywords.split(",")
+
+        return representation
+
+    def update(self, instance, validated_data):
+        """Update and return the topic"""
+        instance.name = validated_data.get('name', instance.name)
+        instance.prompt = validated_data.get('prompt', instance.prompt)
+        keywords = validated_data.get('keywords', instance.keywords)
+        platform = validated_data.get('platform', instance.platform)
+        instance.status = validated_data.get('status', instance.status)
+
+        instance.keywords = ",".join(keywords)
+        instance.platform = ",".join(platform)
+
+        instance.save()
+
+        return instance
+
 class GetDataSerializer(serializers.Serializer):
     """Serializer for GetData API"""
     user_id = serializers.IntegerField()
