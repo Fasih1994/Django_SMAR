@@ -8,6 +8,7 @@ from rest_framework.settings import api_settings
 from user.serializers import (
     UserSerializer,
     AuthTokenSerializer,
+    UserUpdateSerializer
 )
 
 from django.contrib.auth import get_user_model
@@ -39,3 +40,9 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authneticated user"""
         return self.request.user
+
+    def get_serializer_class(self):
+        # Use UserUpdateSerializer for PUT and PATCH requests
+        if self.request.method in ['PUT', 'PATCH']:
+            return UserUpdateSerializer
+        return UserSerializer
