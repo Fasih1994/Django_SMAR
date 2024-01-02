@@ -184,10 +184,10 @@ class PrivateUserAPITests(TestCase):
 
 class UserRegistrationAPIViewTest(TestCase):
          
-     def setUp(self):
+    def setUp(self):
         self.client = APIClient()
         
-     def test_user_registration_api_view_invalid_data(self):
+    def test_user_registration_api_view_invalid_data(self):
         invalid_user_data = {
             'email':'invalid-email',
             'password':'sh',
@@ -196,7 +196,7 @@ class UserRegistrationAPIViewTest(TestCase):
         response = self.client.post(CREATE_USER_URL, invalid_user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
-     def test_create_user_with_defaults(self):
+    def test_create_user_with_defaults(self):
          self.package = Package.objects.get_or_create(name='basic')
          self.role = UserRole.objects.get_or_create(name='admin',id=1)
          data = {
