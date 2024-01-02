@@ -10,6 +10,8 @@ from core.models import (
 
 class OrganizationSerializer(serializers.ModelSerializer):
     """Serializer for organization Object"""
+
+    user = 'user.serializers.UserSerializer'
     class Meta:
         model = Organization
         fields = [
@@ -18,6 +20,24 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'last_update_date', 'last_updated_by', 'last_update_login']
 
         read_only_fields = ['id', 'creation_date', 'created_by']
+
+
+    def update(self, instance, validated_data):
+        """Update and return an organization instance"""
+        user = self.context['request'].user
+
+        if 'name' in validated_data:
+            raise serializers.ValidationError("Name cannot be updated.")
+
+        instance.id = user.organization_id
+        instance.description = validated_data.get('description', instance.description)
+        instance.linkedin_profile = validated_data.get('linkedin_profile', instance.linkedin_profile)
+        instance.industry = validated_data.get('industry', instance.industry)
+        instance.last_updated_by = user.id
+
+        instance.save()
+
+        return instance
 
 
 class PackageSerializer(serializers.ModelSerializer):
@@ -29,7 +49,7 @@ class PackageSerializer(serializers.ModelSerializer):
             'last_update_date', 'last_updated_by','last_update_login'
             ]
 
-        read_only_fields = ['id', 'creation_date', 'created_by']
+        read_only_fields = ['id', 'creation_date', 'created_by', 'price', 'last_updated_by', 'last_update_login']
 
 
 class UserRoleSerializer(serializers.ModelSerializer):
@@ -44,34 +64,37 @@ class UserRoleSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'creation_date', 'created_by']
 
 
-class TopicSerializer(serializers.ModelSerializer):
+class TopicSerializer(serializers.Serializer):
     """Serializer for Topics Object"""
 
     user = 'user.serializers.UserSerializer'
-    class Meta:
-        model = Topics
-        fields = [
-            'id', 'name', 'prompt', 'keywords', 'platform', 'status', 'user',
-            'creation_date', 'created_by', 'last_update_date',
-            'last_updated_by', 'last_update_login']
 
-        read_only_fields = ['id', 'creation_date', 'created_by']
+    user_id = serializers.IntegerField(required=False) #batao please
+    topic_id = serializers.IntegerField(required=False)
+    name = serializers.CharField(max_length=255, required=False)
+    prompt = serializers.CharField(max_length=255, required=False)
+    keywords = serializers.ListField()
+    platform = serializers.ListField()
+    status = serializers.CharField(max_length=1, required=False)
 
     def create(self, validated_data):
         """Create and return a topic"""
         user_id = self.context['request'].user
         name = validated_data.pop('name', 'Untitled')
         prompt = validated_data.pop('prompt', '')
-        keywords = validated_data.pop('keywords', '')
-        platform = validated_data.pop('platform', '')
+        keywords = validated_data.pop('keywords', [])
+        platform = validated_data.pop('platform', [])
         status = validated_data.pop('status', 't')
+
+        keyword = ",".join(keywords)
+        platforms = ",".join(platform)
 
         topic = Topics.objects.create(
             user=user_id,
             name=name,
             prompt=prompt,
-            keywords=keywords,
-            platform=platform,
+            keywords=keyword,
+            platform=platforms,
             status=status,
             **validated_data
         )
@@ -79,28 +102,52 @@ class TopicSerializer(serializers.ModelSerializer):
         return topic
 
 
-# class GetDataSerializer(serializers.Serializer):
-#     """Serializer for GetData API"""
-#     user_id = serializers.IntegerField()
-#     organization_id = serializers.IntegerField()
-#     topic_id = serializers.IntegerField(required=False)
-#     keywords = serializers.ListField()
-#     platforms = serializers.ListField()
+    def to_representation(self, instance):
+        """Include topic_id in the serialized representation"""
+        representation = super().to_representation(instance)
+        representation['topic_id'] = instance.id
+        representation['platform'] = instance.platform.split(",")
+        representation['keywords'] = instance.keywords.split(",")
 
-#     def validate(self, data):
-#         topic_id = data.get('topic_id')
+        return representation
 
-#         if not topic_id:
-#             topic_data = {
-#                 'name': '',
-#                 'prompt': '',
-#                 'keywords': data.get('keywords', ''),
-#                 'platform': data.get('platforms', ''),
-#                 'status': '',
-#                 'user': data.get('user_id'),
-#             }
-#             topic_serializer = TopicSerializer(data=topic_data)
-#             topic_serializer.is_valid(raise_exception=True)
-#             data['topic'] = topic_serializer.save()
+    def update(self, instance, validated_data):
+        """Update and return the topic"""
+        instance.name = validated_data.get('name', instance.name)
+        instance.prompt = validated_data.get('prompt', instance.prompt)
+        keywords = validated_data.get('keywords', instance.keywords)
+        platform = validated_data.get('platform', instance.platform)
+        instance.status = validated_data.get('status', instance.status)
 
-#         return data
+        instance.keywords = ",".join(keywords)
+        instance.platform = ",".join(platform)
+
+        instance.save()
+
+        return instance
+
+class GetDataSerializer(serializers.Serializer):
+    """Serializer for GetData API"""
+    user_id = serializers.IntegerField()
+    organization_id = serializers.IntegerField()
+    topic_id = serializers.IntegerField(required=False)
+    keywords = serializers.ListField()
+    platforms = serializers.ListField()
+
+    def validate(self, data):
+        topic_id = data.get('topic_id')
+
+        if not topic_id:
+            topic_data = {
+                'name': '',
+                'prompt': '',
+                'keywords': data.get('keywords', ''),
+                'platform': data.get('platforms', ''),
+                'status': '',
+                'user': data.get('user_id'),
+            }
+            topic_serializer = TopicSerializer(data=topic_data)
+            topic_serializer.is_valid(raise_exception=True)
+            data['topic'] = topic_serializer.save()
+
+        return data
