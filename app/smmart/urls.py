@@ -13,11 +13,27 @@ router.register('user/topics', viewset=views.TopicViewSet)
 app_name = 'smmart'
 
 urlpatterns = [
-    # path('admin/user/create', views.AdminUserCreateAPIView.as_view(), name='new-user'),
-    path('admin/user/', views.ManageAdminUserAPIView.as_view(), name='edit-user'),
-    path('admin/organization', views.ManageOrganizationAPIView.as_view(), name='edit-organization'),
-    path('admin/assign/package', views.ManageOrganizationPackageAPIView.as_view(), name='update-package'),
-    # path('admin/assign/role/<int:pk>', views.ManageUserRoleAPIView.as_view(), name='update-role'),
+    # path(
+    #     'admin/user/create', views.AdminUserCreateAPIView.as_view(),
+    #     name='new-user'
+    #     ),
+    path(
+        'admin/user/', views.ManageAdminUserAPIView.as_view(),
+        name='edit-user'
+        ),
+    path(
+        'admin/organization', views.ManageOrganizationAPIView.as_view(),
+        name='edit-organization'
+         ),
+    path(
+        'admin/assign/package',
+        views.ManageOrganizationPackageAPIView.as_view(),
+        name='update-package'
+        ),
+    # path(
+    #     'admin/assign/role/<int:pk>', views.ManageUserRoleAPIView.as_view(),
+    #     name='update-role'
+    #     ),
     # path('get-data/', views.GetDataAPIView.as_view(), name='get-data'),
     path('', include(router.urls)),
 ]
