@@ -12,15 +12,16 @@ class OrganizationSerializer(serializers.ModelSerializer):
     """Serializer for organization Object"""
 
     user = 'user.serializers.UserSerializer'
+
     class Meta:
         model = Organization
         fields = [
             'id', 'name', 'description', 'linkedin_profile',
+            'facebook_profile', 'instagram_profile',
             'industry', 'creation_date', 'created_by',
             'last_update_date', 'last_updated_by', 'last_update_login']
 
         read_only_fields = ['id', 'creation_date', 'created_by']
-
 
     def update(self, instance, validated_data):
         """Update and return an organization instance"""
@@ -30,9 +31,22 @@ class OrganizationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Name cannot be updated.")
 
         instance.id = user.organization_id
-        instance.description = validated_data.get('description', instance.description)
-        instance.linkedin_profile = validated_data.get('linkedin_profile', instance.linkedin_profile)
-        instance.industry = validated_data.get('industry', instance.industry)
+        instance.description = validated_data.get(
+            'description', instance.description
+            )
+        instance.linkedin_profile = validated_data.get(
+            'linkedin_profile', instance.linkedin_profile
+            )
+        instance.facebook_profile = validated_data.get(
+            'facebook_profile', instance.facebook_profile
+            )
+        instance.instagram_profile = validated_data.get(
+            'instagram_profile', instance.instagram_profile
+            )
+        instance.industry = validated_data.get(
+            'industry', instance.industry
+            )
+        instance.created_by = user.id
         instance.last_updated_by = user.id
 
         instance.save()
@@ -46,10 +60,13 @@ class PackageSerializer(serializers.ModelSerializer):
         model = Package
         fields = [
             'id', 'name', 'price', 'creation_date', 'created_by',
-            'last_update_date', 'last_updated_by','last_update_login'
+            'last_update_date', 'last_updated_by', 'last_update_login'
             ]
 
-        read_only_fields = ['id', 'creation_date', 'created_by', 'price', 'last_updated_by', 'last_update_login']
+        read_only_fields = [
+            'id', 'creation_date', 'created_by',
+            'price', 'last_updated_by', 'last_update_login'
+            ]
 
 
 class UserRoleSerializer(serializers.ModelSerializer):
@@ -69,7 +86,7 @@ class TopicSerializer(serializers.Serializer):
 
     user = 'user.serializers.UserSerializer'
 
-    user_id = serializers.IntegerField(required=False) #batao please
+    user_id = serializers.IntegerField(required=False)
     topic_id = serializers.IntegerField(required=False)
     name = serializers.CharField(max_length=255, required=False)
     prompt = serializers.CharField(max_length=255, required=False)
@@ -101,7 +118,6 @@ class TopicSerializer(serializers.Serializer):
 
         return topic
 
-
     def to_representation(self, instance):
         """Include topic_id in the serialized representation"""
         representation = super().to_representation(instance)
@@ -125,6 +141,7 @@ class TopicSerializer(serializers.Serializer):
         instance.save()
 
         return instance
+
 
 class GetDataSerializer(serializers.Serializer):
     """Serializer for GetData API"""

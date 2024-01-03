@@ -13,10 +13,16 @@ from user.serializers import (
     )
 from .serializers import (
     TopicSerializer,
-    GetDataSerializer,
+    # GetDataSerializer,
     OrganizationSerializer
 )
-from core.models import Topics, Organization, User, Package, UserRole
+from core.models import (
+    Topics,
+    Organization,
+    User,
+    Package,
+    # UserRole
+    )
 from rest_framework.response import Response
 
 
@@ -86,7 +92,10 @@ class TopicViewSet(viewsets.ModelViewSet):
 #             try:
 #                 topic = Topics.objects.get(id=topic_id)
 #             except Topics.DoesNotExist:
-#                 return Response({'error': 'Topic not found'}, status=status.HTTP_404_NOT_FOUND)
+#                 return Response(
+    # {'error': 'Topic not found'},
+    # status=status.HTTP_404_NOT_FOUND
+    # )
 #         else:
 #             topic_data = {
 #                 'name': '',
@@ -143,7 +152,9 @@ class UserViewSet(viewsets.ModelViewSet):
         """Return all users created by the admin user"""
         admin_user = self.request.user
         organization_id = admin_user.organization_id
-        queryset = get_user_model().objects.filter(organization_id=organization_id)
+        queryset = get_user_model().objects.filter(
+            organization_id=organization_id
+            )
         return queryset
 
 
@@ -163,7 +174,10 @@ class ManageOrganizationPackageAPIView(generics.RetrieveUpdateAPIView):
         try:
             package = Package.objects.get(name=package_name)
         except Package.DoesNotExist:
-            return Response({'error': 'Package does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'Package does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+                )
 
         new_package_id = package.id
 
@@ -172,7 +186,9 @@ class ManageOrganizationPackageAPIView(generics.RetrieveUpdateAPIView):
             user.package_id = new_package_id
             user.save()
 
-        serializer = self.get_serializer(organization, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            organization, data=request.data, partial=partial
+            )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
@@ -194,16 +210,24 @@ class ManageOrganizationPackageAPIView(generics.RetrieveUpdateAPIView):
 
 #         try:
 #             user_id_to_update = kwargs.get('pk')
-#             user = User.objects.get(pk=user_id_to_update, organization_id=user_organization_id)
+#             user = User.objects.get(
+    # pk=user_id_to_update, organization_id=user_organization_id
+    # )
 #         except User.DoesNotExist:
-#             return Response({'error': 'User does not exist or does not belong to the organization'}, status=status.HTTP_404_NOT_FOUND)
+#             return Response(
+    # {'error': 'User does not exist or does not belong to the organization'},
+    # status=status.HTTP_404_NOT_FOUND
+    # )
 
 #         role_name = request.data.get('name')
 
 #         try:
 #             role = UserRole.objects.get(name=role_name)
 #         except UserRole.DoesNotExist:
-#             return Response({'error': 'Role does not exist'}, status=status.HTTP_404_NOT_FOUND)
+#             return Response(
+    # {'error': 'Role does not exist'},
+    # status=status.HTTP_404_NOT_FOUND
+    # )
 
 #         user.role_id = role.id
 #         user.save()
