@@ -26,10 +26,15 @@ urlpatterns = [
         name='edit-organization'
          ),
     path(
-        'admin/assign/package',
+        'admin/get/package',
         views.ManageOrganizationPackageAPIView.as_view(),
-        name='update-package'
+        name='get-package'
         ),
+    path(
+        'admin/assign/package',
+        views.UpdatePackage.as_view(),
+        name='assign-package'
+    ),
     # path(
     #     'admin/assign/role/<int:pk>', views.ManageUserRoleAPIView.as_view(),
     #     name='update-role'

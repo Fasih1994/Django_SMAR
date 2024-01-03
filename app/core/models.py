@@ -95,25 +95,24 @@ class Organization(models.Model):
         return self.name
 
 
-# class PackageStatus(models.Model):
-#     organization = models.ForeignKey(
-#         'Organization', on_delete=models.CASCADE, null=True, blank=True
-#         )
-#     package = models.ForeignKey(
-#         'Package', on_delete=models.PROTECT, null=True, blank=True
-#     )
-#     start_date = models.DateTimeField(auto_now=True)
-#     end_date = models.DateTimeField()
-#     status = models.CharField(max_length=7)
-#     active = models.CharField(max_length=1)
-#     creation_date = models.DateTimeField(auto_now=True)
-#     created_by = models.IntegerField(null=True, blank=True)
-#     last_update_date = models.DateTimeField(auto_now_add=True)
-#     last_updated_by = models.IntegerField(null=True, blank=True)
-#     last_update_login = models.IntegerField(null=True)
+class PackageStatus(models.Model):
+    organization = models.ForeignKey(
+        'Organization', on_delete=models.CASCADE, null=True, blank=True
+        )
+    package = models.ForeignKey(
+        'Package', on_delete=models.PROTECT, null=True, blank=True
+    )
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    status = models.CharField(max_length=1)
+    creation_date = models.DateTimeField(auto_now=True)
+    created_by = models.IntegerField(null=True, blank=True)
+    last_update_date = models.DateTimeField(auto_now_add=True)
+    last_updated_by = models.IntegerField(null=True, blank=True)
+    last_update_login = models.IntegerField(null=True)
 
-#     def __str__(self):
-#         return self.organization
+    def __str__(self):
+        return self.organization
 
 
 class Topics(models.Model):
