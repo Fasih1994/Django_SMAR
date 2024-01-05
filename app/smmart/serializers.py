@@ -1,11 +1,15 @@
-from rest_framework import serializers
-
+from rest_framework import serializers, status
+from django.utils import timezone
+from rest_framework.response import Response
 from core.models import (
     Organization,
     Package,
     UserRole,
-    Topics
+    Topics,
+    PackageStatus
 )
+from django.contrib.auth import get_user_model
+
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -168,3 +172,20 @@ class GetDataSerializer(serializers.Serializer):
             data['topic'] = topic_serializer.save()
 
         return data
+
+
+class PackageStatusSerializer(serializers.ModelSerializer):
+    """Serializer for PackageStatus Object"""
+
+    class Meta:
+        model = PackageStatus
+        fields = [
+            'id', 'organization', 'package', 'start_date', 'end_date', 'status', 'created_by',
+            'last_update_date', 'last_updated_by', 'last_update_login'
+        ]
+
+        read_only_fields = ['id', 'creation_date', 'created_by']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        return representation

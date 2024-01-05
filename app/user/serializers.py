@@ -8,10 +8,19 @@ from django.contrib.auth import (
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
-from core.models import Organization, Package, UserRole
+from django.utils import timezone
+from core.models import (
+    Organization,
+    Package,
+    UserRole,
+    PackageStatus
+    )
 
 from smmart.serializers import (
-    OrganizationSerializer, PackageSerializer, UserRoleSerializer
+    OrganizationSerializer,
+    PackageSerializer,
+    UserRoleSerializer,
+    PackageStatusSerializer
     )
 
 PACKAGES = {
@@ -52,6 +61,20 @@ class UserSerializer(serializers.ModelSerializer):
         user = get_user_model().objects.create_user(
             organization=organization,
             package=package, role=role, **validated_data
+        )
+
+        start_date = timezone.now()
+        end_date = start_date + timezone.timedelta(hours=72)
+        status = 'y' if start_date < end_date else 'n'
+
+        PackageStatus.objects.create(
+            organization=organization,
+            package=package,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            created_by=user.id,
+            last_updated_by=user.id
         )
 
         return user

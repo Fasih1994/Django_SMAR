@@ -4,7 +4,13 @@ from rest_framework import (
     viewsets,
     status
 )
+from rest_framework.generics import GenericAPIView
+
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+from django.utils import timezone
 from core.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 from user.serializers import (
@@ -14,16 +20,17 @@ from user.serializers import (
 from .serializers import (
     TopicSerializer,
     # GetDataSerializer,
-    OrganizationSerializer
+    OrganizationSerializer,
+    PackageStatusSerializer
 )
 from core.models import (
     Topics,
     Organization,
     User,
     Package,
-    # UserRole
+    # UserRole,
+    PackageStatus
     )
-from rest_framework.response import Response
 
 
 class AdminUserCreateAPIView(generics.CreateAPIView):
@@ -63,14 +70,6 @@ class TopicViewSet(viewsets.ModelViewSet):
         # Serialize the queryset using TopicSerializer
 
         return topics
-
-    # def get_queryset(self):
-    #     """Return all topics created by user"""
-    #     user = self.request.user
-    #     #user_id = user.id
-    #     org_id = user.organization_id
-    #     queryset = Topics.objects.filter(user__organization_id=org_id)
-    #     return queryset
 
 
 # class GetDataAPIView(generics.CreateAPIView):
@@ -158,79 +157,78 @@ class UserViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class ManageOrganizationPackageAPIView(generics.RetrieveUpdateAPIView):
-    serializer_class = PackageSerializer
+class ManageOrganizationPackageAPIView(generics.RetrieveAPIView):
+    serializer_class = PackageStatusSerializer
+    queryset = PackageStatus.objects.all()
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+    def retrieve(self, request, *args, **kwargs):
+        user_organization_id = request.user.organization_id
+        instance = PackageStatus.objects.filter(
+            organization_id=user_organization_id,
+            status='y'
+            ).first()
 
-        user_organization_id = self.request.user.organization_id
-        organization = Organization.objects.get(pk=user_organization_id)
+        if not instance:
+            return Response(
+                {'error': 'Package status not found for the user organization'},
+                status=status.HTTP_404_NOT_FOUND
+                )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class UpdatePackage(GenericAPIView):
+
+    serializer_class = PackageSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def put(self, request):
 
         package_name = request.data.get('name')
 
+        user_organization_id = request.user.organization_id
+
+        current_package = PackageStatus.objects.filter(
+            organization=user_organization_id, status='y'
+        ).first()
+
         try:
-            package = Package.objects.get(name=package_name)
+            selected_package = Package.objects.get(name=package_name)
         except Package.DoesNotExist:
             return Response(
                 {'error': 'Package does not exist'},
                 status=status.HTTP_404_NOT_FOUND
-                )
-
-        new_package_id = package.id
-
-        users_to_update = User.objects.filter(organization=organization)
-        for user in users_to_update:
-            user.package_id = new_package_id
-            user.save()
-
-        serializer = self.get_serializer(
-            organization, data=request.data, partial=partial
             )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
 
+        if selected_package.id == current_package.package_id:
+            current_package.start_date = timezone.now()
+            current_package.end_date = current_package.start_date + timezone.timedelta(days=30)
+            current_package.save()
+            new_package_status = current_package
+        else:
+            current_package.status = 'n'
+            current_package.save()
+
+            start_date = timezone.now()
+            end_date = start_date + timezone.timedelta(days=30)
+            status_value = 'y'
+
+            new_package_status = PackageStatus.objects.create(
+                organization_id=user_organization_id,
+                package=selected_package,
+                start_date=start_date,
+                end_date=end_date,
+                status=status_value,
+                created_by=request.user.id
+            )
+
+            users_to_update = get_user_model().objects.filter(organization_id=user_organization_id)
+            for user in users_to_update:
+                user.package_id = selected_package.id
+                user.save()
+
+        serializer = PackageStatusSerializer(new_package_status)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def get_object(self):
-        user_package_id = self.request.user.package_id
-        package = Package.objects.get(pk=user_package_id)
-        return package
-
-
-# class ManageUserRoleAPIView(generics.UpdateAPIView):
-#     serializer_class = UserRoleSerializer
-#     authentication_classes = [authentication.TokenAuthentication]
-#     permission_classes = [IsAuthenticated, IsAdminUser]
-
-#     def update(self, request, *args, **kwargs):
-#         user_organization_id = self.request.user.organization_id
-
-#         try:
-#             user_id_to_update = kwargs.get('pk')
-#             user = User.objects.get(
-    # pk=user_id_to_update, organization_id=user_organization_id
-    # )
-#         except User.DoesNotExist:
-#             return Response(
-    # {'error': 'User does not exist or does not belong to the organization'},
-    # status=status.HTTP_404_NOT_FOUND
-    # )
-
-#         role_name = request.data.get('name')
-
-#         try:
-#             role = UserRole.objects.get(name=role_name)
-#         except UserRole.DoesNotExist:
-#             return Response(
-    # {'error': 'Role does not exist'},
-    # status=status.HTTP_404_NOT_FOUND
-    # )
-
-#         user.role_id = role.id
-#         user.save()
-
-#         serializer = self.get_serializer(user)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
