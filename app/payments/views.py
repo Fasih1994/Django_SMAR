@@ -6,16 +6,15 @@ from rest_framework.authentication import TokenAuthentication
 from payments.serializer import SelectPackageSerializer
 from django.conf import settings
 import stripe
-import time
 
 from core.models import Payment, Package
 from core.permissions import IsAdminUser
+
 
 class CreatePayment(GenericAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [TokenAuthentication]
     serializer_class = SelectPackageSerializer
-
 
     def post(self, request):
         payment = self.get_serializer(data=request.data)
@@ -35,7 +34,7 @@ class CreatePayment(GenericAPIView):
 
         # if the array is empty it means the email has not been used yet
         if len(customer_data) == 0:
-        # creating customer
+            # creating customer
             customer = stripe.Customer.create(
                 name=user.name,
                 email=user.email,
@@ -48,39 +47,44 @@ class CreatePayment(GenericAPIView):
             payment_intent = stripe.PaymentIntent.create(
                 customer=customer,
                 payment_method=payment_method_id,
-                currency='usd', # you can provide any currency you want
+                currency='usd',  # you can provide any currency you want
                 amount=int(package.price*100),
                 confirm=True,
                 return_url="http://localhost:9001/",
-                receipt_email = user.email
+                receipt_email=user.email
                 )
             previous_payments = Payment.objects.filter(
                 organization=user.organization
                 )
             for p_payment in previous_payments:
-                p_payment.is_active=False
+                p_payment.is_active = False
                 p_payment.save()
 
             payment = Payment(
                 payment_intent_id=payment_intent.id,
                 organization=user.organization,
-                succeeded= payment_intent.status == 'succeeded',
+                succeeded=payment_intent.status == 'succeeded',
                 is_active=True,
                 created_by=user.id,
                 last_updated_by=user.id,
                 last_update_login=user.id
-                )
+            )
             payment.save()
-            return Response(status=status.HTTP_200_OK,
-                        data={
-                            'message': 'Success',
-                            'data': {'customer_id': customer.email},
-                            'payment': {
-                                'id': payment.id,
-                                'organization': user.organization.name
-                            }
-                            }
-                        )
+
+            return Response(
+                status=status.HTTP_200_OK,
+                data={
+                    'message': 'Success',
+                    'data': {'customer_id': customer.email},
+                    'payment': {
+                        'id': payment.id,
+                        'organization': user.organization.name
+                    }
+                }
+            )
         except stripe.error.CardError as e:
             print(e)
-            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'message': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+                )
