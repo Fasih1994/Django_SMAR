@@ -31,4 +31,5 @@ urlpatterns = [
     ),
     path('api/django/user/', include('user.urls')),
     path('api/django/smmart/', include('smmart.urls')),
+    path('api/django/payment/', include('payments.urls'))
 ]

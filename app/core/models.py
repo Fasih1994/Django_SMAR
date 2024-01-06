@@ -4,7 +4,8 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
-
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 class UserManager(BaseUserManager):
     """MANAGER for User"""
@@ -153,3 +154,31 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
+
+
+class Payment(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    succeeded = models.BooleanField(default=False)
+    payment_intent_id = models.CharField(max_length=500)
+    is_active = models.BooleanField(default=False)
+
+    # who columns
+    creation_date = models.DateTimeField(auto_now=True)
+    created_by = models.IntegerField(null=True, blank=True)
+    last_update_date = models.DateTimeField(auto_now_add=True)
+    last_updated_by = models.IntegerField(null=True, blank=True)
+    last_update_login = models.IntegerField(null=True)
+
+    def __repr__(self) -> str:
+        active = "Active" if self.is_active else "InActive"
+        return f"{active} Payment by {self.organization.name}"
+
+    def __str__(self):
+        active = "Active" if self.is_active else "InActive"
+        return f"{active} Payment by {self.organization.name}"
+
+
+@receiver(post_save, sender=Organization)
+def create_payment(sender, instance, created, **kwargs):
+    if created:
+        Payment.objects.create(organization=instance)
