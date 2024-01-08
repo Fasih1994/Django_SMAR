@@ -83,8 +83,11 @@ class CreatePayment(GenericAPIView):
                 }
             )
         except stripe.error.CardError as e:
-            print(e)
+            message = str(e)
+            print(message)
+            if ":" in message:
+                message = message.split(": ")[1]
             return Response(
-                {'message': str(e)},
+                {'message': message},
                 status=status.HTTP_400_BAD_REQUEST
                 )
